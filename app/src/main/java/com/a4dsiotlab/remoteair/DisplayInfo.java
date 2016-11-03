@@ -11,11 +11,12 @@ public class DisplayInfo {
     private boolean sttLight;
     private boolean sttMachine;
 
+
     public  void setTemp(int t){
         this.temp = t;
     }
 
-    public  void setHud(int h){
+    public  void setHum(int h){
         this.hud = h;
     }
 
@@ -35,7 +36,7 @@ public class DisplayInfo {
         return  this.temp;
     }
 
-    public  int getHud(){
+    public  int getHum(){
         return  this.hud;
     }
 
