@@ -146,7 +146,12 @@ public class MainActivity extends AppCompatActivity {
         fab = (FloatingActionButton) findViewById(R.id.fab);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
 
-        new SendData().execute("Nghi");
+        MyLogger msd = new MyLogger();
+        msd.log("Nghi");
+        Log.d("DATA",msd.getMsg());
+
+
+
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

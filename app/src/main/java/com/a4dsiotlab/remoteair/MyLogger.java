@@ -4,13 +4,10 @@ package com.a4dsiotlab.remoteair;
  * Created by hoangkhoatv on 11/5/16.
  */
 
-import android.os.Handler;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -19,9 +16,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MyLogger {
     private Thread thread;
     private ConcurrentLinkedQueue<String> msgQueue;
+    private ConcurrentLinkedQueue<String> rcvMsgQueue;
     private Socket socket;
     private PrintWriter writer;
-    Handler updateDataHandler;
+    private Scanner scanner;
 
     private class Job implements Runnable {
         @Override
@@ -29,68 +27,28 @@ public class MyLogger {
             try {
                 socket = new Socket("10.0.2.2",6969);
                 writer = new PrintWriter(socket.getOutputStream());
+                scanner = new Scanner(socket.getInputStream());
                 while (Thread.currentThread().isAlive()) {
                     if (!msgQueue.isEmpty()) {
                         writer.println(msgQueue.remove());
                         writer.flush();
+                    }
+                    // receive msg from server if exist
+                    if (scanner.hasNextLine()) {
+                        rcvMsgQueue.add(scanner.nextLine());
                     }
                 }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            while (!Thread.currentThread().isInterrupted()){
-                try {
-                    ReceiveDataThread receiveDataThread = new ReceiveDataThread(socket);
-                    new Thread(receiveDataThread).start();
-                }catch (IOException e){
-                    e.printStackTrace();
-                }
-            }
 
         }
     }
-    class ReceiveDataThread implements Runnable{
-        private Socket clientSocket;
-        private BufferedReader input;
-        public ReceiveDataThread(Socket clientSocket){
-            this.clientSocket = clientSocket;
-            try {
-                this.input = new BufferedReader(
-                        new InputStreamReader(
-                                this.clientSocket.getInputStream()
-                        ));
-            }catch (IOException e){
-                e.printStackTrace();
-            }
 
-        }
-        @Override
-        public void run(){
-            while (!Thread.currentThread().isInterrupted()){
-                try {
-                    String read = input.readLine();
-                    updateDataHandler.post(new updateDisplaySettings(read));
-
-                }catch (IOException e){
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-    class updateDisplaySettings implements Runnable{
-        private String msg;
-        public updateDisplaySettings(String str){
-            this.msg = str;
-        }
-        @Override
-        public void run(){
-            // xu ly sao???
-        }
-    }
     public MyLogger() {
         msgQueue = new ConcurrentLinkedQueue<>();
-        updateDataHandler = new Handler() ;
+        rcvMsgQueue = new ConcurrentLinkedQueue<>();
         thread = new Thread(new Job());
         thread.start();
     }
@@ -100,5 +58,13 @@ public class MyLogger {
 
     public void log(String message) {
         msgQueue.add(message);
+    }
+
+    public String getMsg() {
+        if (!rcvMsgQueue.isEmpty()) {
+            return rcvMsgQueue.poll();
+        } else {
+            return null;
+        }
     }
 }
