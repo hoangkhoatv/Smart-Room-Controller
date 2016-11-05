@@ -1,12 +1,16 @@
 package com.a4dsiotlab.remoteair;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.EditText;
+
+import java.util.regex.Pattern;
 
 /**
  * Created by hoangkhoatv on 11/3/16.
@@ -14,26 +18,93 @@ import android.view.View;
 
 public class SettingActivity extends AppCompatActivity {
     FloatingActionButton fab ;
+    EditText edtIp, edtPort;
+    public static final String SETTINGS_DATA = "settings_data";
+    public static final String IP_ADDRESS = "str_ip";
+    public static final String Port_NUMBER = "num_port";
+    SharedPreferences preSettings;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.setting_activity);
         fab = (FloatingActionButton) findViewById(R.id.fab);
+        edtIp = (EditText) findViewById(R.id.editTextIP);
+        edtPort = (EditText) findViewById(R.id.editTextPort);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             fab.setImageDrawable(getResources().getDrawable(R.drawable.done, getBaseContext().getTheme()));
         } else {
             fab.setImageDrawable(getResources().getDrawable(R.drawable.done));
         }
+        preSettings=getSharedPreferences(SETTINGS_DATA, MODE_PRIVATE);
+        restoreData();
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Save and Back To Home", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                Intent intent = new Intent(SettingActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
+                if( !(edtIp.getText().toString().equals("") && edtPort.getText().toString().equals("0")) ){
+                    if(validateIp(edtIp.getText().toString())){
+                        if (validatePort(edtPort.getText().toString())){
+                            saveData();
+                            Intent intent = new Intent(SettingActivity.this, MainActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                        else {
+                            Snackbar.make(view, "Port wrong! Ranging from 0 to 65535", Snackbar.LENGTH_LONG)
+                                    .setAction("Action", null).show();
+                        }
+                    }
+                    else {
+                        Snackbar.make(view, "IP Address wrong!", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                    }
+
+                }
+                else {
+                    Snackbar.make(view, "Please, Input IP and Port!", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+
+
 
             }
         });
     }
+    protected void saveData(){
+
+        SharedPreferences.Editor edit=preSettings.edit();
+        edit.putString(IP_ADDRESS,edtIp.getText().toString());
+        edit.putInt(Port_NUMBER,Integer.valueOf(edtPort.getText().toString()));
+        edit.commit();
+
+    }
+
+    protected void restoreData(){
+
+        String strIp = preSettings.getString(IP_ADDRESS,"");
+        edtIp.setText(strIp);
+        int intPort = preSettings.getInt(Port_NUMBER,0);
+        edtPort.setText(String.valueOf(intPort));
+
+    }
+    private static final Pattern PATTERN = Pattern.compile(
+            "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+
+    public boolean validateIp( String ip) {
+        return PATTERN.matcher(ip).matches();
+    }
+
+    public boolean validatePort(String port){
+        int numPort=Integer.valueOf(port);
+        if( numPort>= 0 && numPort<=65535){
+            return true;
+        }
+        return false;
+    }
+
 }

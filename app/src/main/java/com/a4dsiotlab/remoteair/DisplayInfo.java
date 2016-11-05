@@ -5,51 +5,104 @@ package com.a4dsiotlab.remoteair;
  */
 
 public class DisplayInfo {
-    private int temp;
-    private int hud;
+    private int temperature;
+    private int humidity;
     private int light;
-    private boolean sttLight;
-    private boolean sttMachine;
+    private boolean airConditionerMode;
+    private boolean lightMode;
+    private int preferedTemperature;
+    private boolean airConditionerStatus;
+    private boolean lightStatus;
+    private int airConditionerTemperature;
+    private String fromTime;
 
-
-    public  void setTemp(int t){
-        this.temp = t;
+    public String getToTime() {
+        return toTime;
     }
 
-    public  void setHum(int h){
-        this.hud = h;
+    public void setToTime(String toTime) {
+        this.toTime = toTime;
     }
 
-    public  void setLight(int l){
-        this.light = l;
+    public String getFromTime() {
+        return fromTime;
     }
 
-    public  void setSttLight(boolean l){
-        this.sttLight = l;
+    public void setFromTime(String fromTime) {
+        this.fromTime = fromTime;
     }
 
-    public  void setSttMachine(boolean m){
-        this.sttMachine = m;
+    private String toTime;
+
+    public int getAirConditionerTemperature() {
+        return airConditionerTemperature;
     }
 
-    public int getTemp(){
-        return  this.temp;
+    public void setAirConditionerTemperature(int airConditionerTemperature) {
+        this.airConditionerTemperature = airConditionerTemperature;
     }
 
-    public  int getHum(){
-        return  this.hud;
+    public int getTemperature() {
+        return temperature;
     }
 
-    public int getLight(){
-        return this.light;
+    public void setTemperature(int temperature) {
+        this.temperature = temperature;
     }
 
-    public boolean getSttLight(){
-        return  this.sttLight;
+    public int getHumidity() {
+        return humidity;
     }
 
-    public boolean getSttMachine(){
-        return  this.sttMachine;
+    public void setHumidity(int humidity) {
+        this.humidity = humidity;
     }
 
+    public int getLight() {
+        return light;
+    }
+
+    public void setLight(int light) {
+        this.light = light;
+    }
+
+    public boolean getAirConditionerMode() {
+        return airConditionerMode;
+    }
+
+    public void setAirConditionerMode(boolean airConditionerMode) {
+        this.airConditionerMode = airConditionerMode;
+    }
+
+    public boolean getLightMode() {
+        return lightMode;
+    }
+
+    public void setLightMode(boolean lightMode) {
+        this.lightMode = lightMode;
+    }
+
+    public int getPreferedTemperature() {
+        return preferedTemperature;
+    }
+
+    public void setPreferedTemperature(int preferedTemperature) {
+        this.preferedTemperature = preferedTemperature;
+    }
+
+    public boolean getAirConditionerStatus() {
+        return airConditionerStatus;
+    }
+
+    public void setAirConditionerStatus(boolean airConditionerStatus) {
+        this.airConditionerStatus = airConditionerStatus;
+    }
+
+    public boolean getLightStatus() {
+        return lightStatus;
+    }
+
+    public void setLightStatus(boolean lightStatus) {
+        this.lightStatus = lightStatus;
+    }
 }
