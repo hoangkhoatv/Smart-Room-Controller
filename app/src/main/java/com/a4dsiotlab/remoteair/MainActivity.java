@@ -17,6 +17,9 @@ import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
+
+import org.json.JSONObject;
 
 import java.util.Calendar;
 
@@ -27,12 +30,16 @@ public class MainActivity extends AppCompatActivity {
     Switch aSwitch, mSwitch, lSwitch, setLSwitch;
     FloatingActionButton fab ;
     SeekBar seekBar;
+    ProcessData processData;
+    RequestData requestData;
+    PostData postData;
+
 
     int MIN_VALUE = 16;
 
     Button btnFrTime, btnToTime;
 
-    void updateSettings(){
+    protected void updateSettings(){
         if(displayInfo.getAirConditionerMode()){
             aSwitch.setChecked(true);
             setAutoOn();
@@ -65,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setProgress(displayInfo.getPreferedTemperature());
 
     }
-    void updateTextSwitch(){
+    protected void updateTextSwitch(){
 
         if(displayInfo.getAirConditionerMode()){
             aSwitch.setText("Auto");
@@ -97,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void updateDisplay() {
+    protected void updateDisplay() {
 
         /*
         Temperature: 30 oC
@@ -127,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
         lcd.append(String.format("Light mode: %s", displayInfo.getLightMode()?"Auto":"Manual"));
         txtDp.setText(lcd.toString());
     }
+    RequestData msd;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -146,9 +154,31 @@ public class MainActivity extends AppCompatActivity {
         fab = (FloatingActionButton) findViewById(R.id.fab);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
 
-        MyLogger msd = new MyLogger();
-        msd.log("Nghi");
-        Log.d("DATA",msd.getMsg());
+        postData = new PostData();
+        postData.execute("CCC");
+
+        //requestData.log("Khoa");
+       // processData = new ProcessData(requestData);
+        /*
+        //update Display every 5s
+
+        Thread updateDisplayTime = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                while (true){
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    processData.getDataServer(displayInfo);
+                }
+            }
+        });
+        updateDisplayTime.start();*/
+
+
 
 
 
@@ -328,16 +358,32 @@ public class MainActivity extends AppCompatActivity {
         aSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
                 if (aSwitch.isChecked()){
                     aSwitch.setText("Auto");
                     setAutoOn();
                     setManualOff();
                     displayInfo.setAirConditionerMode(true);
+                   // processData.postAutoAirCon(displayInfo);
+                    
+                    JsonProcess jsonProcess = new JsonProcess();
+                    try {
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put(jsonProcess.AIR_CON_MODE,displayInfo.getAirConditionerMode());
+                        jsonObject.put(jsonProcess.PREF_TEMPERATURE,displayInfo.getPreferedTemperature());
+                        jsonObject.put(jsonProcess.FROM_TIME,displayInfo.getFromTime());
+                        jsonObject.put(jsonProcess.TO_TIME,displayInfo.getToTime());
+                        Log.d("", jsonObject.toString());
+                    } catch (Exception e){
+                        Log.d("Error Process Data: ", e.getMessage());
+                    }
+                    Toast.makeText(getBaseContext(),"AAAAAAAAAa",Toast.LENGTH_LONG).show();
                 }
                 else {
                     aSwitch.setText("Manual");
                     setAutoOff();
                     setManualOn();
+                    //processData.postManualAirCon(displayInfo);
                     displayInfo.setAirConditionerMode(false);
 
                 }
@@ -356,6 +402,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                     displayInfo.setAirConditionerStatus(true);
+                    processData.postManualAirCon(displayInfo,"UP");
                 }
                 else{
                     mSwitch.setText("Air Conditioner OFF");
@@ -364,6 +411,7 @@ public class MainActivity extends AppCompatActivity {
                         view.setEnabled(false);
                     }
                     displayInfo.setAirConditionerStatus(false);
+                    processData.postManualAirCon(displayInfo,"DOWN");
                 }
                 updateDisplay();
             }
@@ -376,14 +424,15 @@ public class MainActivity extends AppCompatActivity {
                     lSwitch.setText("Auto");
                     setLSwitch.setEnabled(false);
                     displayInfo.setLightMode(true);
+                    processData.postAutoLight(displayInfo);
                 }
                 else {
                     lSwitch.setText("Manual");
                     setLSwitch.setEnabled(true);
                     displayInfo.setLightMode(false);
+                    processData.postAutoLight(displayInfo);
                 }
                 updateDisplay();
-
             }
         });
 
@@ -393,10 +442,13 @@ public class MainActivity extends AppCompatActivity {
                 if (setLSwitch.isChecked()){
                     setLSwitch.setText("Light ON");
                     displayInfo.setLightStatus(true);
+                    processData.postAutoLight(displayInfo);
+
                 }
                 else {
                     setLSwitch.setText("Light OFF");
                     displayInfo.setLightStatus(false);
+                    processData.postAutoLight(displayInfo);
                 }
                 updateDisplay();
             }

@@ -15,6 +15,8 @@ public class DisplayInfo {
     private boolean lightStatus;
     private int airConditionerTemperature;
     private String fromTime;
+    private String toTime;
+
 
     public String getToTime() {
         return toTime;
@@ -32,7 +34,7 @@ public class DisplayInfo {
         this.fromTime = fromTime;
     }
 
-    private String toTime;
+
 
     public int getAirConditionerTemperature() {
         return airConditionerTemperature;

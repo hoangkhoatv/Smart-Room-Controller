@@ -4,6 +4,8 @@ package com.a4dsiotlab.remoteair;
  * Created by hoangkhoatv on 11/5/16.
  */
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -13,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Created by tommy on 5/26/16.
  */
-public class MyLogger {
+public class RequestData {
     private Thread thread;
     private ConcurrentLinkedQueue<String> msgQueue;
     private ConcurrentLinkedQueue<String> rcvMsgQueue;
@@ -29,13 +31,17 @@ public class MyLogger {
                 writer = new PrintWriter(socket.getOutputStream());
                 scanner = new Scanner(socket.getInputStream());
                 while (Thread.currentThread().isAlive()) {
-                    if (!msgQueue.isEmpty()) {
-                        writer.println(msgQueue.remove());
-                        writer.flush();
-                    }
-                    // receive msg from server if exist
-                    if (scanner.hasNextLine()) {
-                        rcvMsgQueue.add(scanner.nextLine());
+                    try {
+                        if (!msgQueue.isEmpty()) {
+                            writer.println(msgQueue.remove());
+                            writer.flush();
+                        }
+                        // receive msg from server if exist
+                        if (scanner.hasNextLine()) {
+                            rcvMsgQueue.add(scanner.nextLine());
+                        }
+                    } catch (Exception e) {
+                        Log.d("Ex", e.getMessage());
                     }
                 }
 
@@ -46,7 +52,7 @@ public class MyLogger {
         }
     }
 
-    public MyLogger() {
+    public RequestData() {
         msgQueue = new ConcurrentLinkedQueue<>();
         rcvMsgQueue = new ConcurrentLinkedQueue<>();
         thread = new Thread(new Job());
