@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                     StrictMode.setThreadPolicy(policy);
                     exchangeData = new ExchangeData(dataSettings.restoreIpAddress(),dataSettings.restorePort());
                     processData = new ProcessData(exchangeData);
-                  //  processData.getDataServer(displayInfo,this);
+                    processData.getDataServer(displayInfo,this);
 
 
         }

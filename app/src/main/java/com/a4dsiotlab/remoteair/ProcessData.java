@@ -1,5 +1,6 @@
 package com.a4dsiotlab.remoteair;
 
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.InflateException;
@@ -80,18 +81,11 @@ public class ProcessData {
     }
 
     public void getDataServer(final DisplayInfo displayInfo, final AppCompatActivity mainActivity) {
-        JSONObject requestJson = new JSONObject();
-        try {
-            requestJson.put(jsonProcess.GET_DATA, true);
-            this.exchangeData.log(requestJson.toString());
-        } catch (Exception e) {
-            Log.d("Error Get Data", e.getMessage());
-        }
 
-        mainActivity.runOnUiThread(new Runnable() {
-            @Override
+        final Handler handler = new Handler();
+        final Runnable updater = new Runnable() {
+
             public void run() {
-
                 try {
 
                     String msg = exchangeData.getMsg();
@@ -102,7 +96,7 @@ public class ProcessData {
                     try {
                         JSONObject reponseJson = new JSONObject(msg);
 
-                        displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
+                        /*displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
                         displayInfo.setTemperature(reponseJson.getInt(jsonProcess.TEMPERATURE));
                         displayInfo.setHumidity(reponseJson.getInt(jsonProcess.HUMIDITY));
                         displayInfo.setLight(reponseJson.getInt(jsonProcess.LIGHT));
@@ -113,11 +107,14 @@ public class ProcessData {
                         displayInfo.setLightMode(reponseJson.getBoolean(jsonProcess.LIGHT_MODE));
                         displayInfo.setFromTime(reponseJson.getString(jsonProcess.FROM_TIME));
                         displayInfo.setToTime(reponseJson.getString(jsonProcess.TO_TIME));
-                        displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
+                        displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));*/
 
 
                         TextView txtDp = (TextView) mainActivity.findViewById(R.id.textView1);
                         txtDp.setText(displayInfo.getUpdateDisplay());
+
+
+
 
                     } catch (JSONException e) {
                         Log.d("Error Reponse Data", e.getMessage());
@@ -125,13 +122,88 @@ public class ProcessData {
                 } catch (InflateException e) {
                     e.printStackTrace();
                 }
+
+
             }
+        };
+
+        Thread requestData = new Thread() {
+            public void run() {
+
+                while (true) {
+                    handler.post(updater);
+
+                    try {
+                        JSONObject requestJson = new JSONObject();
+                        try {
+                            requestJson.put(jsonProcess.GET_DATA, true);
+                            exchangeData.log(requestJson.toString());
+                        } catch (Exception e) {
+                            Log.d("Error Get Data", e.getMessage());
+                        }
+
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                    }
+
+                }
+            }
+        };
+        requestData.start();
+
+        /*mainActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final Handler handler = new Handler();
+                final int delay = 1000; //milliseconds
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        //do something
+                        try {
+
+                            String msg = exchangeData.getMsg();
+                            while (msg.equals("")) {
+                                msg = exchangeData.getMsg();
+                            }
+
+                            try {
+                                JSONObject reponseJson = new JSONObject(msg);
+
+                                displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
+                                displayInfo.setTemperature(reponseJson.getInt(jsonProcess.TEMPERATURE));
+                                displayInfo.setHumidity(reponseJson.getInt(jsonProcess.HUMIDITY));
+                                displayInfo.setLight(reponseJson.getInt(jsonProcess.LIGHT));
+                                displayInfo.setLightStatus(reponseJson.getBoolean(jsonProcess.LIGHT_POWER));
+                                displayInfo.setAirConditionerStatus(reponseJson.getBoolean(jsonProcess.AIR_CON_POWER));
+                                displayInfo.setPreferedTemperature(reponseJson.getInt(jsonProcess.PREF_TEMPERATURE));
+                                displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
+                                displayInfo.setLightMode(reponseJson.getBoolean(jsonProcess.LIGHT_MODE));
+                                displayInfo.setFromTime(reponseJson.getString(jsonProcess.FROM_TIME));
+                                displayInfo.setToTime(reponseJson.getString(jsonProcess.TO_TIME));
+                                displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
 
 
+                                TextView txtDp = (TextView) mainActivity.findViewById(R.id.textView1);
+                                txtDp.setText(displayInfo.getUpdateDisplay());
 
-    }
 
-    );
+                            } catch (JSONException e) {
+                                Log.d("Error Reponse Data", e.getMessage());
+                            }
+                        } catch (InflateException e) {
+                            e.printStackTrace();
+                        }
+
+
+                        handler.postDelayed(this, delay);
+                    }
+                }, delay);
+
+
+            }
+        }
+
+    );*/
 }
 
 
