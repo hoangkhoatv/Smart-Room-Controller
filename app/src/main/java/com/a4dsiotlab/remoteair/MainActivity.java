@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -17,9 +18,6 @@ import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
-
-import org.json.JSONObject;
 
 import java.util.Calendar;
 
@@ -31,8 +29,9 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton fab ;
     SeekBar seekBar;
     ProcessData processData;
-    RequestData requestData;
-    PostData postData;
+    ExchangeData exchangeData;
+    DataSettings dataSettings;
+
 
 
     int MIN_VALUE = 16;
@@ -104,37 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    protected void updateDisplay() {
 
-        /*
-        Temperature: 30 oC
-        Humidity: 40 %
-        Light: 200 lux
-        Air conditioner status: On/Off
-        Air conditioner mode: Auto/Manual
-        [Air conditioner temperature: 20oC] #neu dang bat moi hien
-        [Prefered temperature: 26oC] #neu mode auto moi hien
-        Light status: On/Off
-        Light mode: Auto/Manual
-         */
-
-        StringBuilder lcd = new StringBuilder();
-        lcd.append(String.format("Temperature: %d °C\n", displayInfo.getTemperature()));
-        lcd.append(String.format("Humidity: %d %s \n", displayInfo.getHumidity(),"%"));
-        lcd.append(String.format("Light: %d lux\n", displayInfo.getLight()));
-        lcd.append(String.format("Air conditioner status: %s\n", displayInfo.getAirConditionerStatus()?"On":"Off"));
-        lcd.append(String.format("Air conditioner mode: %s\n", displayInfo.getAirConditionerMode()?"Auto":"Manual"));
-        if (displayInfo.getAirConditionerStatus()) {
-            lcd.append(String.format("Air conditioner temperature: %d\n", displayInfo.getAirConditionerTemperature()));
-        }
-        if (displayInfo.getAirConditionerMode()) {
-            lcd.append(String.format("Prefered temperature: %d °C\n", displayInfo.getPreferedTemperature()));
-        }
-        lcd.append(String.format("Light status: %s\n", displayInfo.getLightStatus()?"On":"Off"));
-        lcd.append(String.format("Light mode: %s", displayInfo.getLightMode()?"Auto":"Manual"));
-        txtDp.setText(lcd.toString());
-    }
-    RequestData msd;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -154,11 +123,7 @@ public class MainActivity extends AppCompatActivity {
         fab = (FloatingActionButton) findViewById(R.id.fab);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
 
-        postData = new PostData();
-        postData.execute("CCC");
 
-        //requestData.log("Khoa");
-       // processData = new ProcessData(requestData);
         /*
         //update Display every 5s
 
@@ -178,7 +143,26 @@ public class MainActivity extends AppCompatActivity {
         });
         updateDisplayTime.start();*/
 
+        //Get Data
+        dataSettings = new DataSettings(getBaseContext());
 
+        //Settings if no data
+        if(dataSettings.restoreIpAddress().equals("")){
+            Intent intent = new Intent(MainActivity.this, SettingActivity.class);
+            startActivity(intent);
+            finish();
+        }
+        else {
+
+                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                           .permitAll().build();
+                    StrictMode.setThreadPolicy(policy);
+                    exchangeData = new ExchangeData(dataSettings.restoreIpAddress(),dataSettings.restorePort());
+                    processData = new ProcessData(exchangeData);
+                  //  processData.getDataServer(displayInfo,this);
+
+
+        }
 
 
 
@@ -222,9 +206,11 @@ public class MainActivity extends AppCompatActivity {
         //Typeface fontDigital = Typeface.createFromAsset(getAssets(),"Font/digital-7.ttf");
         //txtDp.setTypeface(fontDigital);
         setSeekbar();
-        updateDisplay();
+        txtDp.setText(displayInfo.getUpdateDisplay());
         updateTextSwitch();
         updateSettings();
+
+
 
     }
 
@@ -243,7 +229,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 displayInfo.setPreferedTemperature(seekBar.getProgress() + MIN_VALUE);
-                updateDisplay();
+                txtDp.setText(displayInfo.getUpdateDisplay());
+                processData.postAutoAirCon(displayInfo);
+
             }
         });
     }
@@ -267,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 txtFrTime.setText( tempTime);
                 displayInfo.setFromTime(tempTime);
+                processData.postAutoAirCon(displayInfo);
 
             }
         }, hour, minute, true);//Yes 24 hour time
@@ -283,13 +272,19 @@ public class MainActivity extends AppCompatActivity {
         mTimePicker = new TimePickerDialog(MainActivity.this, new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
+                String tempTime;
+
                 if(selectedMinute > 9){
-                    txtToTime.setText( selectedHour + ":" + selectedMinute);
+                    tempTime =  selectedHour + ":" + selectedMinute;
                 }
                 else {
-                    txtToTime.setText( selectedHour + ":0" + selectedMinute);
+                    tempTime = selectedHour + ":0" + selectedMinute;
 
                 }
+                txtToTime.setText( tempTime);
+                displayInfo.setToTime(tempTime);
+                processData.postAutoAirCon(displayInfo);
+
             }
         }, hour, minute, true);//Yes 24 hour time
         mTimePicker.setTitle("Select To Time");
@@ -354,6 +349,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     public void setSwitch(){
         aSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -364,30 +360,17 @@ public class MainActivity extends AppCompatActivity {
                     setAutoOn();
                     setManualOff();
                     displayInfo.setAirConditionerMode(true);
-                   // processData.postAutoAirCon(displayInfo);
-                    
-                    JsonProcess jsonProcess = new JsonProcess();
-                    try {
-                        JSONObject jsonObject = new JSONObject();
-                        jsonObject.put(jsonProcess.AIR_CON_MODE,displayInfo.getAirConditionerMode());
-                        jsonObject.put(jsonProcess.PREF_TEMPERATURE,displayInfo.getPreferedTemperature());
-                        jsonObject.put(jsonProcess.FROM_TIME,displayInfo.getFromTime());
-                        jsonObject.put(jsonProcess.TO_TIME,displayInfo.getToTime());
-                        Log.d("", jsonObject.toString());
-                    } catch (Exception e){
-                        Log.d("Error Process Data: ", e.getMessage());
-                    }
-                    Toast.makeText(getBaseContext(),"AAAAAAAAAa",Toast.LENGTH_LONG).show();
+                    processData.postAutoAirCon(displayInfo);
+
                 }
                 else {
                     aSwitch.setText("Manual");
                     setAutoOff();
                     setManualOn();
-                    //processData.postManualAirCon(displayInfo);
                     displayInfo.setAirConditionerMode(false);
-
+                    processData.postManualAirCon(displayInfo);
                 }
-                updateDisplay();
+                txtDp.setText(displayInfo.getUpdateDisplay());
             }
         });
 
@@ -402,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                     displayInfo.setAirConditionerStatus(true);
-                    processData.postManualAirCon(displayInfo,"UP");
+                    processData.postManualAirCon(displayInfo);
                 }
                 else{
                     mSwitch.setText("Air Conditioner OFF");
@@ -411,9 +394,10 @@ public class MainActivity extends AppCompatActivity {
                         view.setEnabled(false);
                     }
                     displayInfo.setAirConditionerStatus(false);
-                    processData.postManualAirCon(displayInfo,"DOWN");
+                    processData.postManualAirCon(displayInfo);
                 }
-                updateDisplay();
+                txtDp.setText(displayInfo.getUpdateDisplay());
+
             }
         });
 
@@ -432,7 +416,8 @@ public class MainActivity extends AppCompatActivity {
                     displayInfo.setLightMode(false);
                     processData.postAutoLight(displayInfo);
                 }
-                updateDisplay();
+                txtDp.setText(displayInfo.getUpdateDisplay());
+
             }
         });
 
@@ -448,11 +433,23 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     setLSwitch.setText("Light OFF");
                     displayInfo.setLightStatus(false);
-                    processData.postAutoLight(displayInfo);
+                    processData.postManualLight(displayInfo);
                 }
-                updateDisplay();
+                txtDp.setText(displayInfo.getUpdateDisplay());
+
             }
         });
     }
 
+    public void clickUp(View view) {
+        processData.postManualAirCon(displayInfo,"UP");
+
+
+    }
+
+    public void clickDown(View view) {
+        processData.postManualAirCon(displayInfo,"DOWN");
+
+
+    }
 }

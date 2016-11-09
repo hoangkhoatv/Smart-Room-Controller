@@ -223,13 +223,15 @@
                             android:text="Up"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:id="@+id/buttonUp" />
+                            android:id="@+id/buttonUp"
+                            android:onClick="clickUp"/>
 
                         <Button
                             android:text="Down"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:id="@+id/buttonDown" />
+                            android:id="@+id/buttonDown"
+                            android:onClick="clickDown"/>
                     </LinearLayout>
 
 

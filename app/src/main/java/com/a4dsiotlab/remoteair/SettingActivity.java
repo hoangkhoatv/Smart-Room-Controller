@@ -1,7 +1,6 @@
 package com.a4dsiotlab.remoteair;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -19,10 +18,8 @@ import java.util.regex.Pattern;
 public class SettingActivity extends AppCompatActivity {
     FloatingActionButton fab ;
     EditText edtIp, edtPort;
-    public static final String SETTINGS_DATA = "settings_data";
-    public static final String IP_ADDRESS = "str_ip";
-    public static final String Port_NUMBER = "num_port";
-    SharedPreferences preSettings;
+    DataSettings dataSettings;
+
 
 
     @Override
@@ -32,13 +29,13 @@ public class SettingActivity extends AppCompatActivity {
         fab = (FloatingActionButton) findViewById(R.id.fab);
         edtIp = (EditText) findViewById(R.id.editTextIP);
         edtPort = (EditText) findViewById(R.id.editTextPort);
+        dataSettings = new DataSettings(getBaseContext());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             fab.setImageDrawable(getResources().getDrawable(R.drawable.done, getBaseContext().getTheme()));
         } else {
             fab.setImageDrawable(getResources().getDrawable(R.drawable.done));
         }
-        preSettings=getSharedPreferences(SETTINGS_DATA, MODE_PRIVATE);
         restoreData();
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -76,19 +73,14 @@ public class SettingActivity extends AppCompatActivity {
         });
     }
     protected void saveData(){
-
-        SharedPreferences.Editor edit=preSettings.edit();
-        edit.putString(IP_ADDRESS,edtIp.getText().toString());
-        edit.putInt(Port_NUMBER,Integer.valueOf(edtPort.getText().toString()));
-        edit.commit();
-
+        dataSettings.SaveData(edtIp.getText().toString(),Integer.valueOf(edtPort.getText().toString()));
     }
 
     protected void restoreData(){
 
-        String strIp = preSettings.getString(IP_ADDRESS,"");
+        String strIp = dataSettings.restoreIpAddress();
         edtIp.setText(strIp);
-        int intPort = preSettings.getInt(Port_NUMBER,0);
+        int intPort = dataSettings.restorePort();
         edtPort.setText(String.valueOf(intPort));
 
     }

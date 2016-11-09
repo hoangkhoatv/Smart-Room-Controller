@@ -35,7 +35,6 @@ public class DisplayInfo {
     }
 
 
-
     public int getAirConditionerTemperature() {
         return airConditionerTemperature;
     }
@@ -107,4 +106,37 @@ public class DisplayInfo {
     public void setLightStatus(boolean lightStatus) {
         this.lightStatus = lightStatus;
     }
+
+    public String getUpdateDisplay() {
+
+        /*
+        Temperature: 30 oC
+        Humidity: 40 %
+        Light: 200 lux
+        Air conditioner status: On/Off
+        Air conditioner mode: Auto/Manual
+        [Air conditioner temperature: 20oC] #neu dang bat moi hien
+        [Prefered temperature: 26oC] #neu mode auto moi hien
+        Light status: On/Off
+        Light mode: Auto/Manual
+         */
+
+        StringBuilder lcd = new StringBuilder();
+        lcd.append(String.format("Temperature: %d °C\n", this.temperature));
+        lcd.append(String.format("Humidity: %d %s \n", this.humidity, "%"));
+        lcd.append(String.format("Light: %d lux\n", this.light));
+        lcd.append(String.format("Air conditioner status: %s\n", this.airConditionerStatus ? "On" : "Off"));
+        lcd.append(String.format("Air conditioner mode: %s\n", this.airConditionerMode ? "Auto" : "Manual"));
+        if (airConditionerStatus) {
+            lcd.append(String.format("Air conditioner temperature: %d\n", this.airConditionerTemperature));
+        }
+        if (airConditionerMode) {
+            lcd.append(String.format("Prefered temperature: %d °C\n", this.preferedTemperature));
+        }
+        lcd.append(String.format("Light status: %s\n", this.lightStatus ? "On" : "Off"));
+        lcd.append(String.format("Light mode: %s", this.lightMode ? "Auto" : "Manual"));
+        return lcd.toString();
+    }
+
+
 }

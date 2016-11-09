@@ -24,10 +24,12 @@ public class RequestData {
     private Scanner scanner;
 
     private class Job implements Runnable {
+
         @Override
         public void run() {
             try {
                 socket = new Socket("10.0.2.2",6969);
+
                 writer = new PrintWriter(socket.getOutputStream());
                 scanner = new Scanner(socket.getInputStream());
                 while (Thread.currentThread().isAlive()) {
@@ -44,6 +46,7 @@ public class RequestData {
                         Log.d("Ex", e.getMessage());
                     }
                 }
+                socket.close();
 
             } catch (IOException e) {
                 e.printStackTrace();
