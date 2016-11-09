@@ -96,7 +96,7 @@ public class ProcessData {
                     try {
                         JSONObject reponseJson = new JSONObject(msg);
 
-                        /*displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
+                        displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
                         displayInfo.setTemperature(reponseJson.getInt(jsonProcess.TEMPERATURE));
                         displayInfo.setHumidity(reponseJson.getInt(jsonProcess.HUMIDITY));
                         displayInfo.setLight(reponseJson.getInt(jsonProcess.LIGHT));
@@ -107,7 +107,7 @@ public class ProcessData {
                         displayInfo.setLightMode(reponseJson.getBoolean(jsonProcess.LIGHT_MODE));
                         displayInfo.setFromTime(reponseJson.getString(jsonProcess.FROM_TIME));
                         displayInfo.setToTime(reponseJson.getString(jsonProcess.TO_TIME));
-                        displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));*/
+                        displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
 
 
                         TextView txtDp = (TextView) mainActivity.findViewById(R.id.textView1);
