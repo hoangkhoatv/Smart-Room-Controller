@@ -41,7 +41,7 @@ public class ProcessData {
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(jsonProcess.AIR_CON_MODE, displayInfo.getAirConditionerMode());
-            jsonObject.put(jsonProcess.AIR_CON_POWER, displayInfo.getAirConditionerMode());
+            jsonObject.put(jsonProcess.AIR_CON_POWER, displayInfo.getAirConditionerStatus());
             jsonObject.put(jsonProcess.AIR_CON_CONTROL, control);
             this.exchangeData.log(jsonObject.toString());
         } catch (Exception e) {
@@ -53,6 +53,7 @@ public class ProcessData {
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(jsonProcess.AIR_CON_MODE, displayInfo.getAirConditionerMode());
+            jsonObject.put(jsonProcess.AIR_CON_POWER, displayInfo.getAirConditionerStatus());
             this.exchangeData.log(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
@@ -73,7 +74,7 @@ public class ProcessData {
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(jsonProcess.LIGHT_MODE, displayInfo.getLightMode());
-            jsonObject.put(jsonProcess.LIGHT_POWER, displayInfo.getLightMode());
+            jsonObject.put(jsonProcess.LIGHT_POWER, displayInfo.getLightStatus());
             this.exchangeData.log(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
@@ -87,7 +88,6 @@ public class ProcessData {
 
             public void run() {
                 try {
-
                     String msg = exchangeData.getMsg();
                     while (msg.equals("")) {
                         msg = exchangeData.getMsg();
@@ -107,7 +107,7 @@ public class ProcessData {
                         displayInfo.setLightMode(reponseJson.getBoolean(jsonProcess.LIGHT_MODE));
                         displayInfo.setFromTime(reponseJson.getString(jsonProcess.FROM_TIME));
                         displayInfo.setToTime(reponseJson.getString(jsonProcess.TO_TIME));
-                        displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
+
 
 
                         TextView txtDp = (TextView) mainActivity.findViewById(R.id.textView1);
@@ -127,10 +127,10 @@ public class ProcessData {
             }
         };
 
-        Thread requestData = new Thread() {
+        Thread thread = new Thread() {
             public void run() {
 
-                while (true) {
+                while (Thread.currentThread().isAlive()) {
                     handler.post(updater);
 
                     try {
@@ -149,7 +149,7 @@ public class ProcessData {
                 }
             }
         };
-        requestData.start();
+        thread.start();
 
         /*mainActivity.runOnUiThread(new Runnable() {
             @Override

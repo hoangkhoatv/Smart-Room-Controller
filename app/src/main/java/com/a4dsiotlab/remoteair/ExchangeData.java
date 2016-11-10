@@ -41,6 +41,8 @@ public class ExchangeData {
                     }
 
 
+
+
         }
     }
 
@@ -104,12 +106,14 @@ public class ExchangeData {
         thread = new Thread(new Job());
         thread.start();
     }
-    public void close() {
+    public void close() throws IOException {
+        this.socket.close();
         thread.interrupt();
     }
     public void log(String message) {
         msgQueue = message;
     }
+
 
     public String getMsg() {
         if (!rcvMsgQueue.equals("")) {

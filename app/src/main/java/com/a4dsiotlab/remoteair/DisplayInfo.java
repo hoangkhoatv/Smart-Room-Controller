@@ -125,7 +125,8 @@ public class DisplayInfo {
         lcd.append(String.format("Temperature: %d °C\n", this.temperature));
         lcd.append(String.format("Humidity: %d %s \n", this.humidity, "%"));
         lcd.append(String.format("Light: %d lux\n", this.light));
-        lcd.append(String.format("Air conditioner status: %s\n", this.airConditionerStatus ? "On" : "Off"));
+        lcd.append(String.format("Air conditioner temperature: %d °C\n", this.airConditionerTemperature));
+        lcd.append(String.format("Air conditioner power: %s\n", this.airConditionerStatus ? "On" : "Off"));
         lcd.append(String.format("Air conditioner mode: %s\n", this.airConditionerMode ? "Auto" : "Manual"));
         if (airConditionerStatus) {
             lcd.append(String.format("Air conditioner temperature: %d\n", this.airConditionerTemperature));

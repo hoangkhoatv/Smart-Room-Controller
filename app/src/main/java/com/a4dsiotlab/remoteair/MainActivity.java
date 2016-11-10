@@ -1,10 +1,14 @@
 package com.a4dsiotlab.remoteair;
 
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -19,7 +23,15 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.URL;
 import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     TextView txtDp, txtFrTime, txtToTime;
@@ -31,6 +43,9 @@ public class MainActivity extends AppCompatActivity {
     ProcessData processData;
     ExchangeData exchangeData;
     DataSettings dataSettings;
+    Thread thread;
+    String ipAddress;
+    int portNumber;
 
 
 
@@ -38,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button btnFrTime, btnToTime;
 
-    protected void updateSettings(){
+    public void updateSettings(){
         if(displayInfo.getAirConditionerMode()){
             aSwitch.setChecked(true);
             setAutoOn();
@@ -103,6 +118,30 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public  boolean IsReachable(Context context) {
+        // First, check we have any sort of connectivity
+        final ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo netInfo = connMgr.getActiveNetworkInfo();
+        boolean isReachable = false;
+
+        if (netInfo != null && netInfo.isConnected()) {
+            // Some sort of connection is open, check if server is reachable
+            try {
+                URL url = new URL("http://10.0.2.2");
+                HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+                urlc.setRequestProperty("User-Agent", "Android Application");
+                urlc.setRequestProperty("Connection", "close");
+                urlc.setConnectTimeout(10 * 2000);
+                urlc.connect();
+                isReachable = (urlc.getResponseCode() == 200);
+            } catch (IOException e) {
+                //Log.e(TAG, e.getMessage());
+            }
+        }
+
+        return isReachable;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +161,30 @@ public class MainActivity extends AppCompatActivity {
         btnToTime = (Button) findViewById(R.id.buttonTime2);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
+        aSwitch = (Switch) findViewById(R.id.switch1);
+        mSwitch = (Switch) findViewById(R.id.switch2);
+        lSwitch = (Switch) findViewById(R.id.switch3);
+        setLSwitch = (Switch) findViewById(R.id.switch4);
+
+
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            fab.setImageDrawable(getResources().getDrawable(R.drawable.icon, getBaseContext().getTheme()));
+        } else {
+            fab.setImageDrawable(getResources().getDrawable(R.drawable.icon));
+        }
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                Intent intent = new Intent(MainActivity.this, SettingActivity.class);
+                startActivity(intent);
+
+
+            }
+        });
 
 
         /*
@@ -146,6 +209,10 @@ public class MainActivity extends AppCompatActivity {
         //Get Data
         dataSettings = new DataSettings(getBaseContext());
 
+            ipAddress = dataSettings.restoreIpAddress();
+            portNumber = dataSettings.restorePort();
+
+
         //Settings if no data
         if(dataSettings.restoreIpAddress().equals("")){
             Intent intent = new Intent(MainActivity.this, SettingActivity.class);
@@ -153,46 +220,66 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
         else {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            displayInfo.setFromTime("00:00");
+            displayInfo.setToTime("00:00");
+            setSeekbar();
+            setSwitch();
+            exchangeData = new ExchangeData(dataSettings.restoreIpAddress(),dataSettings.restorePort());
+            processData = new ProcessData(exchangeData);
+            processData.getDataServer(displayInfo,MainActivity.this);
+            txtDp.setText(displayInfo.getUpdateDisplay());
+            updateTextSwitch();
+            updateSettings();
 
-                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-                           .permitAll().build();
-                    StrictMode.setThreadPolicy(policy);
-                    exchangeData = new ExchangeData(dataSettings.restoreIpAddress(),dataSettings.restorePort());
-                    processData = new ProcessData(exchangeData);
-                    processData.getDataServer(displayInfo,this);
+          /*  if (!isHostReachable(ipAddress,portNumber,1000)){
+                txtDp.setText("No Internet Access");
+                // startActivity(new Intent(WifiManager.ACTION_PICK_WIFI_NETWORK));
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+
+                // Setting Dialog Title
+                alertDialog.setTitle("Can not connect to Server:");
+
+                // Setting Dialog Message
+                alertDialog.setMessage("Do you want to go to wifi settings?");
+
+                // Setting Icon to Dialog
+                // alertDialog.setIcon(R.drawable.ic_launcher);
+
+                // Setting Positive "Yes" Button
+                alertDialog.setPositiveButton("Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                // Activity transfer to wifi settings
+                                startActivityForResult(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS), 0);
+                            }
+                        });
+
+                // Setting Negative "NO" Button
+                 /*alertDialog.setNegativeButton("no",
+                         new DialogInterface.OnClickListener() {
+                             public void onClick(DialogInterface dialog, int which) {
+                                 // Write your code here to invoke NO event
+
+                                 dialog.cancel();
+                             }
+                         });
+
+                // Showing Alert Message
+                alertDialog.show();
 
 
-        }
+            }*/
 
-
-
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            fab.setImageDrawable(getResources().getDrawable(R.drawable.icon, getBaseContext().getTheme()));
-        } else {
-            fab.setImageDrawable(getResources().getDrawable(R.drawable.icon));
-        }
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                Intent intent = new Intent(MainActivity.this, SettingActivity.class);
-                startActivity(intent);
 
 
             }
-        });
-
-        aSwitch = (Switch) findViewById(R.id.switch1);
-        mSwitch = (Switch) findViewById(R.id.switch2);
-        lSwitch = (Switch) findViewById(R.id.switch3);
-        setLSwitch = (Switch) findViewById(R.id.switch4);
-
-        setSwitch();
 
 
+            //ConnectToServer();
 
 
         /*final float scale = getResources().getDisplayMetrics().density;
@@ -203,17 +290,96 @@ public class MainActivity extends AppCompatActivity {
         );
         params.setMargins(0, 0, 0, pixels);
         rl.setLayoutParams(params);*/
-        //Typeface fontDigital = Typeface.createFromAsset(getAssets(),"Font/digital-7.ttf");
-        //txtDp.setTypeface(fontDigital);
-        setSeekbar();
-        txtDp.setText(displayInfo.getUpdateDisplay());
-        updateTextSwitch();
-        updateSettings();
+            //Typeface fontDigital = Typeface.createFromAsset(getAssets(),"Font/digital-7.ttf");
+            //txtDp.setTypeface(fontDigital);
+
+
+
+
 
 
 
     }
 
+    public static boolean isHostReachable(String serverAddress, int serverTCPport, int timeoutMS){
+        boolean connected = false;
+        Socket socket;
+        try {
+            socket = new Socket();
+            SocketAddress socketAddress = new InetSocketAddress(serverAddress, serverTCPport);
+            socket.connect(socketAddress, timeoutMS);
+            if (socket.isConnected()) {
+                connected = true;
+                socket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket = null;
+        }
+        return connected;
+    }
+    protected void ConnectToServer(){
+        final Handler handler = new Handler();
+
+        final Runnable updater = new Runnable() {
+
+            public void run() {
+
+                exchangeData = new ExchangeData(ipAddress,portNumber);
+                processData = new ProcessData(exchangeData);
+                processData.getDataServer(displayInfo,MainActivity.this);
+                setSeekbar();
+                setSwitch();
+                txtDp.setText(displayInfo.getUpdateDisplay());
+                updateTextSwitch();
+                updateSettings();
+
+
+            }
+
+
+        };
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                while (!isHostReachable(ipAddress,portNumber,1000)){
+                   handler.post(updater);
+
+                }
+            }
+        }, 0, 3000);
+
+
+        /*final Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                while () {
+
+
+                    handler.post(updater);
+
+
+
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+
+
+
+            }});
+
+       // t.start(); */// spawn thread
+    }
     protected  void setSeekbar(){
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -427,7 +593,7 @@ public class MainActivity extends AppCompatActivity {
                 if (setLSwitch.isChecked()){
                     setLSwitch.setText("Light ON");
                     displayInfo.setLightStatus(true);
-                    processData.postAutoLight(displayInfo);
+                    processData.postManualLight(displayInfo);
 
                 }
                 else {
