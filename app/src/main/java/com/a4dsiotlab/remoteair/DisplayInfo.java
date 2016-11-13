@@ -16,6 +16,7 @@ public class DisplayInfo {
     private int airConditionerTemperature;
     private String fromTime;
     private String toTime;
+    private String time;
 
 
     public String getToTime() {
@@ -107,21 +108,30 @@ public class DisplayInfo {
         this.lightStatus = lightStatus;
     }
 
-    public String getUpdateDisplay() {
+    public String getTime() {
+        return time;
+    }
 
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public String getUpdateDisplay() {
         /*
+        Time: 11:11
         Temperature: 30 oC
         Humidity: 40 %
         Light: 200 lux
         Air conditioner status: On/Off
         Air conditioner mode: Auto/Manual
-        [Air conditioner temperature: 20oC] #neu dang bat moi hien
-        [Prefered temperature: 26oC] #neu mode auto moi hien
+        Air conditioner temperature: 20°C #Nếu máy lạnh đang bật mới hiện
+        Prefered temperature: 26 °C #Nếu Air conditioner mode: Auto mới hiện
         Light status: On/Off
         Light mode: Auto/Manual
-         */
+        */
 
         StringBuilder lcd = new StringBuilder();
+        lcd.append(String.format("Time: %s \n", this.time));
         lcd.append(String.format("Temperature: %d °C\n", this.temperature));
         lcd.append(String.format("Humidity: %d %s \n", this.humidity, "%"));
         lcd.append(String.format("Light: %d lux\n", this.light));

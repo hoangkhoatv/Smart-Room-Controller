@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
     ProcessData processData;
     ExchangeData exchangeData;
     DataSettings dataSettings;
-    Thread thread;
     String ipAddress;
     int portNumber;
 
@@ -127,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         if (netInfo != null && netInfo.isConnected()) {
             // Some sort of connection is open, check if server is reachable
             try {
-                URL url = new URL("http://10.0.2.2");
+                URL url = new URL("http://"+ipAddress);
                 HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
                 urlc.setRequestProperty("User-Agent", "Android Application");
                 urlc.setRequestProperty("Connection", "close");
@@ -141,7 +140,17 @@ public class MainActivity extends AppCompatActivity {
 
         return isReachable;
     }
+    @Override
+    public void onDestroy() {
 
+      try {
+            processData.close();
+            exchangeData.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        super.onDestroy();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,8 +188,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+
                 Intent intent = new Intent(MainActivity.this, SettingActivity.class);
                 startActivity(intent);
+                finish();
 
 
             }
@@ -205,20 +216,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         updateDisplayTime.start();*/
+        //Setdata test
+        displayInfo.setTime("10.20");
+        displayInfo.setTemperature(28);
+        displayInfo.setHumidity(70);
+        displayInfo.setLight(696);
+        displayInfo.setAirConditionerTemperature(27);
+        
+
 
         //Get Data
         dataSettings = new DataSettings(getBaseContext());
+        ipAddress = dataSettings.restoreIpAddress();
+        portNumber = dataSettings.restorePort();
 
-            ipAddress = dataSettings.restoreIpAddress();
-            portNumber = dataSettings.restorePort();
 
-
-        //Settings if no data
+        // Go to Settings if no data
         if(dataSettings.restoreIpAddress().equals("")){
             Intent intent = new Intent(MainActivity.this, SettingActivity.class);
             startActivity(intent);
-            finish();
         }
+        //Connect to Server
         else {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                     .permitAll().build();
@@ -551,7 +569,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                     displayInfo.setAirConditionerStatus(true);
-                    processData.postManualAirCon(displayInfo);
+                   processData.postManualAirCon(displayInfo);
                 }
                 else{
                     mSwitch.setText("Air Conditioner OFF");

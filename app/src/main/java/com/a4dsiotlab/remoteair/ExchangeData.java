@@ -7,60 +7,56 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-/**
- * Created by hoangkhoatv on 11/8/16.
- */
-
 public class ExchangeData {
-    private Thread thread;
+    private Sender sender;
+    private Receiver receiver;
     private Socket socket;
-    BufferedReader in = null;
-    PrintWriter out = null;
-   // private Handler handler;
+    private BufferedReader in = null;
+    private PrintWriter out = null;
     private String msgQueue;
     private String rcvMsgQueue;
-    String iPAddress;
-    int port;
+    private String iPAddress;
+    private int port;
+    private boolean stop = false;
 
 
-    private class Job implements Runnable {
+    private class Sender extends Thread {
+
+        private PrintWriter out;
+
+        public Sender(PrintWriter out) {
+            this.out = out;
+        }
 
         @Override
         public void run() {
 
-                    while (Thread.currentThread().isAlive()){
-                       if (!msgQueue.equals("")){
-                            if(out!=null){
-                                out.println(msgQueue);
-                                out.flush();
-                                msgQueue = "";
-
-                           }
-                        }
-
+            while (!stop) {
+                if (!msgQueue.equals("")) {
+                    if (this.out != null) {
+                        this.out.println(msgQueue);
+                        this.out.flush();
+                        msgQueue = "";
                     }
+                }
 
-
-
-
+            }
         }
     }
 
-    class Sender extends Thread {
-        private PrintWriter out;
+    private class Receiver extends Thread {
+
         private BufferedReader in;
-       // private Handler handler;
-        public Sender(BufferedReader input,PrintWriter output) {
-            this.out=output;
-            this.in=input;
-           // this.handler=handler;
+
+        public Receiver(BufferedReader input) {
+            this.in = input;
         }
 
         public void run() {
             try {
                 // Read messages from the server
                 String message;
-                while ((message = in.readLine()) != null) {
+                while ((message = in.readLine()) != null && !stop) {
                     rcvMsgQueue = message;
 
                 }
@@ -69,47 +65,36 @@ public class ExchangeData {
             }
         }
     }
+
     public ExchangeData(String iPAddress, int port) {
         msgQueue = "";
         rcvMsgQueue = "";
         this.iPAddress = iPAddress;
         this.port = port;
         try {
-            this.socket = new Socket(iPAddress,port);
+            this.socket = new Socket(iPAddress, port);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-
-        /*handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                handler = new Handler() {
-                    @Override
-                    public void handleMessage(Message msg) {
-                        Bundle bundle = msg.getData();
-                        String string = bundle.getString("myKey");
-                        rcvMsgQueue = string;
-
-                    }
-                };
-            }
-        };*/
-        Sender sender = new Sender(in,out);
+        //Create Thread Send and Receive
+        Sender sender = new Sender(out);
         sender.setDaemon(true);
         sender.start();
 
-        thread = new Thread(new Job());
-        thread.start();
+        Receiver receiver = new Receiver(in);
+        receiver.setDaemon(true);
+        receiver.start();
+
     }
+
     public void close() throws IOException {
         this.socket.close();
-        thread.interrupt();
+        stop = true;
     }
+
     public void log(String message) {
         msgQueue = message;
     }

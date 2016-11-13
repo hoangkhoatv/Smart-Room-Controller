@@ -20,5 +20,6 @@ public class JsonProcess {
     public static final String TO_TIME = "ToTime";
     public static final String AIR_CON_CONTROL = "AirConditionerControl"; //"UP/DOWN"
     public static final String GET_DATA = "GetData";
+    public static final String TIME = "Time";
 
 }

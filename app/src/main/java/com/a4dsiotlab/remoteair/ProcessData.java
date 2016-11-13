@@ -17,12 +17,16 @@ import org.json.JSONObject;
 public class ProcessData {
     private JsonProcess jsonProcess;
     private ExchangeData exchangeData;
+    private Thread sendRequest;
+    private boolean stop =false;
 
     public ProcessData(ExchangeData exchangeData) {
         this.exchangeData = exchangeData;
         jsonProcess = new JsonProcess();
     }
-
+    public void close(){
+        stop = true;
+    }
     public void postAutoAirCon(DisplayInfo displayInfo) {
         try {
 
@@ -95,7 +99,7 @@ public class ProcessData {
 
                     try {
                         JSONObject reponseJson = new JSONObject(msg);
-
+                        displayInfo.setTime(reponseJson.getString(jsonProcess.TIME));
                         displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
                         displayInfo.setTemperature(reponseJson.getInt(jsonProcess.TEMPERATURE));
                         displayInfo.setHumidity(reponseJson.getInt(jsonProcess.HUMIDITY));
@@ -127,10 +131,10 @@ public class ProcessData {
             }
         };
 
-        Thread thread = new Thread() {
+         sendRequest = new Thread() {
             public void run() {
 
-                while (Thread.currentThread().isAlive()) {
+                while (!stop) {
                     handler.post(updater);
 
                     try {
@@ -149,7 +153,7 @@ public class ProcessData {
                 }
             }
         };
-        thread.start();
+        sendRequest.start();
 
         /*mainActivity.runOnUiThread(new Runnable() {
             @Override
