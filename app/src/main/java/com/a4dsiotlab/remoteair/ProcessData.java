@@ -35,7 +35,7 @@ public class ProcessData {
             jsonObject.put(jsonProcess.FROM_TIME, displayInfo.getFromTime());
             jsonObject.put(jsonProcess.PREF_TEMPERATURE, displayInfo.getPreferedTemperature());
             jsonObject.put(jsonProcess.AIR_CON_MODE, displayInfo.getAirConditionerMode());
-            this.exchangeData.log(jsonObject.toString());
+            this.exchangeData.setMsg(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
         }
@@ -47,7 +47,7 @@ public class ProcessData {
             jsonObject.put(jsonProcess.AIR_CON_MODE, displayInfo.getAirConditionerMode());
             jsonObject.put(jsonProcess.AIR_CON_POWER, displayInfo.getAirConditionerStatus());
             jsonObject.put(jsonProcess.AIR_CON_CONTROL, control);
-            this.exchangeData.log(jsonObject.toString());
+            this.exchangeData.setMsg(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
         }
@@ -58,7 +58,7 @@ public class ProcessData {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(jsonProcess.AIR_CON_MODE, displayInfo.getAirConditionerMode());
             jsonObject.put(jsonProcess.AIR_CON_POWER, displayInfo.getAirConditionerStatus());
-            this.exchangeData.log(jsonObject.toString());
+            this.exchangeData.setMsg(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
         }
@@ -68,7 +68,7 @@ public class ProcessData {
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(jsonProcess.LIGHT_MODE, displayInfo.getLightMode());
-            this.exchangeData.log(jsonObject.toString());
+            this.exchangeData.setMsg(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
         }
@@ -79,7 +79,7 @@ public class ProcessData {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(jsonProcess.LIGHT_MODE, displayInfo.getLightMode());
             jsonObject.put(jsonProcess.LIGHT_POWER, displayInfo.getLightStatus());
-            this.exchangeData.log(jsonObject.toString());
+            this.exchangeData.setMsg(jsonObject.toString());
         } catch (Exception e) {
             Log.d("Error Process Data: ", e.getMessage());
         }
@@ -98,11 +98,16 @@ public class ProcessData {
                     }
 
                     try {
+
                         JSONObject reponseJson = new JSONObject(msg);
                         displayInfo.setTime(reponseJson.getString(jsonProcess.TIME));
                         displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
                         displayInfo.setTemperature(reponseJson.getInt(jsonProcess.TEMPERATURE));
-                        displayInfo.setHumidity(reponseJson.getInt(jsonProcess.HUMIDITY));
+
+                        //Caculator Humidity
+                        int hum = getHumidityTrue(reponseJson.getInt(jsonProcess.HUMIDITY),reponseJson.getInt(jsonProcess.TEMPERATURE));
+
+                        displayInfo.setHumidity(hum);
                         displayInfo.setLight(reponseJson.getInt(jsonProcess.LIGHT));
                         displayInfo.setLightStatus(reponseJson.getBoolean(jsonProcess.LIGHT_POWER));
                         displayInfo.setAirConditionerStatus(reponseJson.getBoolean(jsonProcess.AIR_CON_POWER));
@@ -111,14 +116,9 @@ public class ProcessData {
                         displayInfo.setLightMode(reponseJson.getBoolean(jsonProcess.LIGHT_MODE));
                         displayInfo.setFromTime(reponseJson.getString(jsonProcess.FROM_TIME));
                         displayInfo.setToTime(reponseJson.getString(jsonProcess.TO_TIME));
-
-
-
+                        //Update Sreen
                         TextView txtDp = (TextView) mainActivity.findViewById(R.id.textView1);
                         txtDp.setText(displayInfo.getUpdateDisplay());
-
-
-
 
                     } catch (JSONException e) {
                         Log.d("Error Reponse Data", e.getMessage());
@@ -126,8 +126,6 @@ public class ProcessData {
                 } catch (InflateException e) {
                     e.printStackTrace();
                 }
-
-
             }
         };
 
@@ -135,80 +133,31 @@ public class ProcessData {
             public void run() {
 
                 while (!stop) {
-                    handler.post(updater);
 
-                    try {
-                        JSONObject requestJson = new JSONObject();
+                    JSONObject requestJson = new JSONObject();
                         try {
                             requestJson.put(jsonProcess.GET_DATA, true);
-                            exchangeData.log(requestJson.toString());
+                            exchangeData.setMsg(requestJson.toString());
                         } catch (Exception e) {
                             Log.d("Error Get Data", e.getMessage());
                         }
 
+                    handler.post(updater);
+                    try {
                         Thread.sleep(3000);
                     } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-
                 }
             }
         };
         sendRequest.start();
 
-        /*mainActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                final Handler handler = new Handler();
-                final int delay = 1000; //milliseconds
-                handler.postDelayed(new Runnable() {
-                    public void run() {
-                        //do something
-                        try {
-
-                            String msg = exchangeData.getMsg();
-                            while (msg.equals("")) {
-                                msg = exchangeData.getMsg();
-                            }
-
-                            try {
-                                JSONObject reponseJson = new JSONObject(msg);
-
-                                displayInfo.setAirConditionerTemperature(reponseJson.getInt(jsonProcess.AIR_CON_TEMP));
-                                displayInfo.setTemperature(reponseJson.getInt(jsonProcess.TEMPERATURE));
-                                displayInfo.setHumidity(reponseJson.getInt(jsonProcess.HUMIDITY));
-                                displayInfo.setLight(reponseJson.getInt(jsonProcess.LIGHT));
-                                displayInfo.setLightStatus(reponseJson.getBoolean(jsonProcess.LIGHT_POWER));
-                                displayInfo.setAirConditionerStatus(reponseJson.getBoolean(jsonProcess.AIR_CON_POWER));
-                                displayInfo.setPreferedTemperature(reponseJson.getInt(jsonProcess.PREF_TEMPERATURE));
-                                displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
-                                displayInfo.setLightMode(reponseJson.getBoolean(jsonProcess.LIGHT_MODE));
-                                displayInfo.setFromTime(reponseJson.getString(jsonProcess.FROM_TIME));
-                                displayInfo.setToTime(reponseJson.getString(jsonProcess.TO_TIME));
-                                displayInfo.setAirConditionerMode(reponseJson.getBoolean(jsonProcess.AIR_CON_MODE));
-
-
-                                TextView txtDp = (TextView) mainActivity.findViewById(R.id.textView1);
-                                txtDp.setText(displayInfo.getUpdateDisplay());
-
-
-                            } catch (JSONException e) {
-                                Log.d("Error Reponse Data", e.getMessage());
-                            }
-                        } catch (InflateException e) {
-                            e.printStackTrace();
-                        }
-
-
-                        handler.postDelayed(this, delay);
-                    }
-                }, delay);
-
-
-            }
-        }
-
-    );*/
 }
-
+    public int getHumidityTrue(int sorh, int tc){
+        float humidity = (float) (-4 + 0.0405*sorh + (-2.8 * Math.pow(10,-6))*(sorh^2));
+        int humidity_true =  (int) ((tc - 25) * (0.01 + 0.00008*sorh) + humidity);
+        return humidity_true;
+    }
 
 }

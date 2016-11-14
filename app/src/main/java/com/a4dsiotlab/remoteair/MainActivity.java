@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     DataSettings dataSettings;
     String ipAddress;
     int portNumber;
+    Socket socket;
 
 
 
@@ -243,9 +244,11 @@ public class MainActivity extends AppCompatActivity {
             StrictMode.setThreadPolicy(policy);
             displayInfo.setFromTime("00:00");
             displayInfo.setToTime("00:00");
+
+
             setSeekbar();
             setSwitch();
-            exchangeData = new ExchangeData(dataSettings.restoreIpAddress(),dataSettings.restorePort());
+            exchangeData = new ExchangeData(ipAddress,portNumber);
             processData = new ProcessData(exchangeData);
             processData.getDataServer(displayInfo,MainActivity.this);
             txtDp.setText(displayInfo.getUpdateDisplay());
@@ -297,7 +300,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-            //ConnectToServer();
 
 
         /*final float scale = getResources().getDisplayMetrics().density;
@@ -338,50 +340,71 @@ public class MainActivity extends AppCompatActivity {
         return connected;
     }
     protected void ConnectToServer(){
-        final Handler handler = new Handler();
+      /*  final Handler handler = new Handler();
 
         final Runnable updater = new Runnable() {
 
             public void run() {
+                try {
+                    socket = new Socket(ipAddress,portNumber);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if(socket.isConnected()){
+                    exchangeData = new ExchangeData(ipAddress,portNumber,socket);
+                    processData = new ProcessData(exchangeData);
+                    processData.getDataServer(displayInfo,MainActivity.this);
+                    setSeekbar();
+                    setSwitch();
+                    txtDp.setText(displayInfo.getUpdateDisplay());
+                    updateTextSwitch();
+                    updateSettings();
+                }
 
-                exchangeData = new ExchangeData(ipAddress,portNumber);
-                processData = new ProcessData(exchangeData);
-                processData.getDataServer(displayInfo,MainActivity.this);
-                setSeekbar();
-                setSwitch();
-                txtDp.setText(displayInfo.getUpdateDisplay());
-                updateTextSwitch();
-                updateSettings();
+
 
 
             }
 
 
         };
-        Timer timer = new Timer();
+       Timer timer = new Timer();
         timer.schedule(new TimerTask()
         {
             @Override
             public void run()
             {
-                while (!isHostReachable(ipAddress,portNumber,1000)){
-                   handler.post(updater);
+                while (true){
+                    Log.d("socket",String.valueOf(socket.isConnected()));
+                    if(!socket.isConnected()){
+                        try {
+                            exchangeData.close();
+                            processData.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        handler.post(updater);
+                    }
 
                 }
-            }
-        }, 0, 3000);
+            }*/
+     //   }, 0, 3000);
 
-
-        /*final Thread t = new Thread(new Runnable() {
+        final Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
 
-                while () {
+                while (true) {
 
 
-                    handler.post(updater);
+                  //  handler.post(updater);
 
 
+                    try {
+                        Log.d("socket",String.valueOf(socket.getInetAddress().isReachable(2000)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
                     try {
                         Thread.sleep(2000);
@@ -396,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
 
             }});
 
-       // t.start(); */// spawn thread
+       t.start(); // spawn thread
     }
     protected  void setSeekbar(){
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {

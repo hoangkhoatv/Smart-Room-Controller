@@ -32,13 +32,23 @@ public class ExchangeData {
         public void run() {
 
             while (!stop) {
-                if (!msgQueue.equals("")) {
-                    if (this.out != null) {
-                        this.out.println(msgQueue);
-                        this.out.flush();
-                        msgQueue = "";
+                if (!socket.isConnected()){
+                    try {
+                        close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }else{
+                    if (!msgQueue.equals("")) {
+                        if (this.out != null) {
+                            this.out.println(msgQueue);
+                            this.out.flush();
+                            msgQueue = "";
+                        }
                     }
                 }
+
 
             }
         }
@@ -57,8 +67,16 @@ public class ExchangeData {
                 // Read messages from the server
                 String message;
                 while ((message = in.readLine()) != null && !stop) {
-                    rcvMsgQueue = message;
+                    if (!socket.isConnected()){
+                        try {
+                            close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
+                    }else {
+                        rcvMsgQueue = message;
+                    }
                 }
             } catch (IOException ioe) {
                 ioe.printStackTrace();
@@ -72,7 +90,7 @@ public class ExchangeData {
         this.iPAddress = iPAddress;
         this.port = port;
         try {
-            this.socket = new Socket(iPAddress, port);
+            this.socket = new Socket(iPAddress,port);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
 
@@ -95,7 +113,7 @@ public class ExchangeData {
         stop = true;
     }
 
-    public void log(String message) {
+    public void setMsg(String message) {
         msgQueue = message;
     }
 

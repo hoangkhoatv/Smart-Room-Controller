@@ -7,6 +7,7 @@ package com.a4dsiotlab.remoteair;
 
 
 public class JsonProcess {
+
     public static final String AIR_CON_POWER = "AirConditionerPower";
     public static final String LIGHT_POWER = "LightPower";
     public static final String AIR_CON_TEMP = "AirConditionerTemperature";
